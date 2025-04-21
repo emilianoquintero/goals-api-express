@@ -1,4 +1,5 @@
 var express = require('express');
+const { pedirTodas } = require('../db/pedidos');
 var router = express.Router();
 
 let metas = [
@@ -24,7 +25,13 @@ let metas = [
 
 /* GET Lista de metas. */
 router.get('/', function(req, res, next) {
-  res.send(metas);
+  pedirTodas('metas', (err, metas) => {
+    if (err) {
+      return next(err);
+    }
+    console.log(metas)
+    res.send(metas);
+  });
 });
 
 /* GET Meta con id. */
