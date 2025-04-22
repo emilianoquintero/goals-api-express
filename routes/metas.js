@@ -1,5 +1,8 @@
 var express = require('express');
 const { pedirTodas } = require('../db/pedidos');
+const { pedir } = require('../db/pedidos');
+const { crear } = require('../db/pedidos');
+const { body, validationResult } = require('express-validator')
 var router = express.Router();
 
 let metas = [
@@ -37,19 +40,32 @@ router.get('/', function(req, res, next) {
 /* GET Meta con id. */
 router.get('/:id', function(req, res, next) {
   const id = req.params.id;
-  const meta = metas.find(item => item.id === id);
-  if(!meta) {
-    return res.sendStatus(404);
-  }
-  res.send(meta);
+  pedir('metas', id, (err, meta) => {
+    if (err) {
+      return next(err);
+    }
+    if(!meta.length){
+      return res.sendStatus(404);
+    }
+    res.send(meta[0]);
+  });
 });
 
 /* POST Crear Meta. */
-router.post('/', function(req, res, next) {
-  const meta = req.body;
-  metas.push(meta);
-  res.status(201);
-  res.send(meta);
+router.post('/', body('detalles').isLength({min: 5 }), body('periodo').not().isEmpty(),
+function(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()){
+    return res.status(400).json({errors : errors.array()});
+  }
+
+  const nuevaMeta = req.body;
+  crear('metas', nuevaMeta, (err, meta) => {
+    if (err) {
+      return next(err);
+    }
+    res.send(meta);
+  });
 });
 
 /* PUT Actualizar Meta. */
